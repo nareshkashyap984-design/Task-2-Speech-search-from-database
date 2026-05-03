@@ -149,3 +149,16 @@ http://localhost:3000
 ## CSV Fallback
 
 You can use the `Upload CSV` button in the portal to test official CSV data manually.
+
+## PHQ CSV Structure
+
+The portal now supports the April 2026 PHQ complaint CSV structure, including:
+
+- `complRegNum`, `complRegDt`, `complDesc`, `complSrno`
+- `firstName`, `lastName`, `mobile`, `age`
+- `addressDistrict`, `addressPs`
+- `receptionMode`, `incidentType`, `incidentPlc`
+- `statusRaw`, `statusGroup`, `statusOfComplaint`
+- `complaintSource`, `respondentCategories`
+
+Speech search can now match complaint number, complainant, mobile, district, police station, incident text, source, and status. Result speaking remains manual through `Speak Answer`, row click, or the row `Speak` button, and `Stop Speak` cancels narration.

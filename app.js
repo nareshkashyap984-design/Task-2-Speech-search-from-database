@@ -74,23 +74,71 @@ function normalizeKey(value) {
 }
 
 function normalizeComplaint(record) {
+  var firstName = record.first_name || "";
+  var lastName = record.last_name || "";
+  var complainantName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  var status = record.status_group || record.status || record.status_raw || record.status_of_complaint || "Pending";
+  var statusDetail = record.status_of_complaint || record.status_raw || status;
+  var address = [
+    record.address_line1,
+    record.address_line2,
+    record.address_line3,
+    record.village,
+    record.tehsil
+  ].filter(Boolean).join(", ");
+
   return {
-    complaint_id: record.complaint_id || record.id || "",
-    date: record.date || record.received_date || "",
-    complainant: record.complainant || record.name || "",
-    police_station: record.police_station || record.station || "",
-    category: record.category || record.complaint_type || "",
-    status: record.status || "Pending",
-    assigned_officer: record.assigned_officer || record.officer || "",
-    priority: record.priority || "Normal"
+    complaint_id: record.compl_reg_num || record.complaint_id || record.id || "",
+    complaint_srno: record.compl_srno || "",
+    date: formatDate(record.compl_reg_dt || record.date || record.received_date || ""),
+    complainant: record.complainant || record.name || complainantName || "Not Specified",
+    mobile: record.mobile || "",
+    gender: record.gender || "",
+    age: record.age || "",
+    address: address,
+    district: record.address_district || record.district_name || "",
+    police_station: record.address_ps || record.police_station || record.station || record.submit_ps_cd || "",
+    category: record.crime_category || record.incident_type || record.type_of_complaint || record.class_of_incident || record.category || record.complaint_type || "Not Specified",
+    description: record.compl_desc || record.description || "",
+    incident_place: record.incident_plc || "",
+    reception_mode: record.reception_mode || "",
+    source: record.complaint_source || record.reception_mode || "",
+    status: status,
+    status_detail: statusDetail,
+    assigned_officer: record.io_details || record.assigned_officer || record.officer || "EO Not Assigned",
+    respondent_categories: record.respondent_categories || "",
+    purpose: record.complaint_purpose || "",
+    priority: record.priority || derivePriority(statusDetail, record.compl_desc || "")
   };
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "";
+  }
+  var parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  }
+  return value;
+}
+
+function derivePriority(statusDetail, description) {
+  var text = String(statusDetail + " " + description).toLowerCase();
+  if (text.indexOf("urgent") !== -1 || text.indexOf("high priority") !== -1 || text.indexOf("immediate") !== -1) {
+    return "High";
+  }
+  return "Normal";
 }
 
 function askQuestion() {
   var question = elements.questionInput.value.trim();
   if (!question) {
     elements.answerText.textContent = "Type or speak a question first.";
-    speakText("Type or speak a question first.");
     return;
   }
 
@@ -106,9 +154,40 @@ function answerFromData(question) {
   var filters = [];
 
   records = filterByKnownValues(records, query, "status", filters);
+  records = filterByKnownValues(records, query, "status_detail", filters);
   records = filterByKnownValues(records, query, "priority", filters);
   records = filterByKnownValues(records, query, "police_station", filters);
+  records = filterByKnownValues(records, query, "district", filters);
   records = filterByKnownValues(records, query, "category", filters);
+  records = filterByKnownValues(records, query, "source", filters);
+
+  var freeTextTerms = query.split(" ").filter(function (term) {
+    return term.length >= 3 && ["show", "complaints", "complaint", "status", "count", "total", "how", "many", "there", "from", "with"].indexOf(term) === -1;
+  });
+  if (freeTextTerms.length) {
+    var textMatched = records.filter(function (item) {
+      var searchable = [
+        item.complaint_id,
+        item.complaint_srno,
+        item.complainant,
+        item.mobile,
+        item.district,
+        item.police_station,
+        item.category,
+        item.description,
+        item.incident_place,
+        item.status_detail,
+        item.source
+      ].join(" ").toLowerCase();
+      return freeTextTerms.some(function (term) {
+        return searchable.indexOf(term) !== -1;
+      });
+    });
+    if (textMatched.length) {
+      records = textMatched;
+      filters.push("keyword search");
+    }
+  }
 
   if (hasAny(query, ["pending", "pend", "बाकी", "लंबित"])) {
     records = filterExact(records, "status", "Pending");
@@ -131,6 +210,7 @@ function answerFromData(question) {
 
   var topStation = topValue(records, "police_station");
   var topCategory = topValue(records, "category");
+  var topDistrict = topValue(records, "district");
   var filterText = filters.length ? " Filters applied: " + uniqueValues(filters).join(", ") + "." : "";
   var statusText = summarizeByKey(records, "status", "Status");
 
@@ -149,7 +229,7 @@ function answerFromData(question) {
   }
 
   return {
-    text: "Found " + records.length + " matching record(s). Top police station: " + topStation.label + " (" + topStation.count + "). Top category: " + topCategory.label + " (" + topCategory.count + "). " + statusText + filterText,
+    text: "Found " + records.length + " matching record(s). Top district: " + topDistrict.label + " (" + topDistrict.count + "). Top police station: " + topStation.label + " (" + topStation.count + "). Top incident type: " + topCategory.label + " (" + topCategory.count + "). " + statusText + filterText,
     records: records
   };
 }
@@ -239,7 +319,8 @@ function renderResults() {
   elements.matchCount.textContent = state.results.length + " matches";
   renderChart({
     "Status": countBy(state.results, "status"),
-    "Category": countBy(state.results, "category")
+    "Incident": countBy(state.results, "category"),
+    "Source": countBy(state.results, "source")
   });
   renderTable();
 }
@@ -278,11 +359,12 @@ function renderTable() {
       "<td>", escapeHtml(item.complaint_id), "</td>",
       "<td>", escapeHtml(item.date), "</td>",
       "<td>", escapeHtml(item.complainant), "</td>",
+      "<td>", escapeHtml(item.mobile), "</td>",
       "<td>", escapeHtml(item.police_station), "</td>",
+      "<td>", escapeHtml(item.district), "</td>",
       "<td>", escapeHtml(item.category), "</td>",
-      "<td><span class=\"badge ", statusClass(item.status), "\">", escapeHtml(item.status), "</span></td>",
-      "<td>", escapeHtml(item.assigned_officer), "</td>",
-      "<td><span class=\"badge ", priorityClass(item.priority), "\">", escapeHtml(item.priority), "</span></td>",
+      "<td><span class=\"badge ", statusClass(item.status), "\">", escapeHtml(item.status_detail), "</span></td>",
+      "<td>", escapeHtml(item.source), "</td>",
       "<td><button class=\"speak-row\" type=\"button\">Speak</button></td>"
     ].join("");
     row.addEventListener("click", function () {
@@ -437,13 +519,16 @@ function stopSpeaking() {
 function formatRecordSpeech(item) {
   return [
     "Complaint", item.complaint_id + ".",
+    "Serial number", item.complaint_srno + ".",
     "Date", item.date + ".",
     "Complainant", item.complainant + ".",
+    "Mobile", item.mobile + ".",
     "Police station", item.police_station + ".",
-    "Category", item.category + ".",
-    "Status", item.status + ".",
-    "Assigned officer", item.assigned_officer + ".",
-    "Priority", item.priority + "."
+    "District", item.district + ".",
+    "Incident type", item.category + ".",
+    "Status", item.status_detail + ".",
+    "Source", item.source + ".",
+    "Complaint description", item.description + "."
   ].join(" ");
 }
 

@@ -1,9 +1,2 @@
-complaint_id,date,complainant,police_station,category,status,assigned_officer,priority
-CMP-001,2026-02-01,Ramesh Kumar,PS Quilla,Fraud,Pending,ASI Sandeep,High
-CMP-002,2026-02-03,Sunita Devi,PS Samalkha,Domestic Dispute,In Progress,SI Pooja,Normal
-CMP-003,2026-02-05,Amit Malik,PS Tehsil Camp,Theft,Resolved,HC Ravinder,Normal
-CMP-004,2026-02-07,Naveen Sharma,PS Sector 13/17,Cyber Complaint,Pending,SI Manish,High
-CMP-005,2026-02-09,Kavita Rani,PS Quilla,Property Dispute,In Progress,ASI Sandeep,Normal
-CMP-006,2026-02-11,Imran Khan,PS Samalkha,Missing Article,Resolved,HC Ravinder,Low
-CMP-007,2026-02-13,Meena,PS Tehsil Camp,Public Nuisance,Pending,SI Pooja,Normal
-CMP-008,2026-02-15,Deepak,PS Sector 13/17,Fraud,Resolved,SI Manish,High
+complRegNum,complRegDt,districtName,districtMasterId,policeStationMasterId,officeMasterId,complDesc,complSrno,firstName,lastName,mobile,gender,age,addressLine1,addressLine2,addressLine3,village,tehsil,addressDistrict,addressPs,receptionMode,incidentType,incidentPlc,incidentFromDt,incidentToDt,submitPsCd,submitOfficeCd,email,statusRaw,statusGroup,statusOfComplaint,disposalDate,classOfIncident,complaintSource,typeOfComplaint,crimeCategory,complainantType,complaintPurpose,ioDetails,respondentCategories,transferDistrictCd,transferOfficeCd,transferPsCd
+1.30101E+12,Mon Apr 27 2026 00:00:00 GMT+0530 (India Standard Time),,,,,HE SAID TO ME TOOK A TOURIST VISA OF UAE FOR HIM AND I DONE IT THROUGH MY FRIEND AFTER THAT HE DIDNT GIVE MONEY FOR THAT,2600016,ANSAR FARIS p,,7025430768,,24,1,CENNAKKAL,MUTTIKKAD,ANANTHAVOOR,Tehsil Block Mandal,MALAPPURAM,KALPAKANCHERRY,Online,HE SAID TO TOOK A TOURIST VISA OF UAE FOR HIM BUT HE DIDNT GIVE MONEY,HARYANA,Tue Jan 07 2025 00:00:00 GMT+0530 (India Standard Time),Tue Jan 07 2025 00:00:00 GMT+0530 (India Standard Time),0,130101,Online,Pending-EO Not Assigned,pending,Pending-EO Not Assigned,,,,,HE SAID TO TOOK A TOURIST VISA OF UAE FOR HIM BUT HE DIDNT GIVE MONEY,,,,Against Private Person,13240,132400401,0

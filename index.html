@@ -21,16 +21,16 @@
 
     <section class="assistant-panel">
       <div class="question-row">
-        <input id="questionInput" type="text" placeholder="Ask: pending complaints in PS Quilla, high priority cases, resolved fraud complaints">
+        <input id="questionInput" type="text" placeholder="Ask: pending online complaints, complaints from Malappuram, visa complaints, KALPAKANCHERRY cases">
         <button id="micButton" type="button" title="Speak question">Mic</button>
         <button id="askButton" type="button">Ask</button>
       </div>
       <p id="speechStatus" class="speech-status">Use text search or click Mic and speak your question.</p>
       <div class="quick-questions" aria-label="Example questions">
         <button type="button" data-question="How many pending complaints are there?">Pending count</button>
-        <button type="button" data-question="Show high priority complaints">High priority</button>
-        <button type="button" data-question="Complaints from PS Quilla">PS Quilla</button>
-        <button type="button" data-question="Show resolved fraud complaints">Resolved fraud</button>
+        <button type="button" data-question="Show online complaints">Online source</button>
+        <button type="button" data-question="Complaints from Malappuram">Malappuram</button>
+        <button type="button" data-question="Show visa complaints">Visa complaints</button>
       </div>
     </section>
 
@@ -68,11 +68,12 @@
               <th>Complaint ID</th>
               <th>Date</th>
               <th>Complainant</th>
+              <th>Mobile</th>
               <th>Police Station</th>
-              <th>Category</th>
+              <th>District</th>
+              <th>Incident Type</th>
               <th>Status</th>
-              <th>Officer</th>
-              <th>Priority</th>
+              <th>Source</th>
               <th>Action</th>
             </tr>
           </thead>
