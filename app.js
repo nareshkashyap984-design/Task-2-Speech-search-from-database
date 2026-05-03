@@ -1,9 +1,19 @@
 var state = {
   complaints: [],
-  results: []
+  results: [],
+  lookups: {
+    districts: {},
+    offices: {},
+    policeStations: {}
+  }
 };
 
 var sampleCsvPath = "data/sample_complaints.csv";
+var lookupPaths = {
+  districts: "data/districts.csv",
+  offices: "data/offices.csv",
+  policeStations: "data/police-stations.csv"
+};
 
 var elements = {
   csvInput: document.getElementById("csvInput"),
@@ -59,13 +69,62 @@ function parseCsv(text) {
     rows.push(row);
   }
 
+  return parseCsvRecordsFromRows(rows).map(normalizeComplaint);
+}
+
+function parseCsvRecords(text) {
+  var rows = [];
+  var current = "";
+  var row = [];
+  var inQuotes = false;
+
+  for (var index = 0; index < text.length; index += 1) {
+    var char = text[index];
+    var next = text[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      row.push(current.trim());
+      current = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") {
+        index += 1;
+      }
+      row.push(current.trim());
+      if (row.some(Boolean)) {
+        rows.push(row);
+      }
+      row = [];
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current || row.length) {
+    row.push(current.trim());
+    rows.push(row);
+  }
+
+  return parseCsvRecordsFromRows(rows);
+}
+
+function parseCsvRecordsFromRows(rows) {
+  if (!rows.length) {
+    return [];
+  }
+
   var headers = rows.shift().map(normalizeKey);
   return rows.map(function (values) {
     var record = {};
     headers.forEach(function (header, headerIndex) {
       record[header] = values[headerIndex] || "";
     });
-    return normalizeComplaint(record);
+    return record;
   });
 }
 
@@ -106,10 +165,35 @@ function normalizeComplaint(record) {
     status: status,
     status_detail: statusDetail,
     assigned_officer: record.io_details || record.assigned_officer || record.officer || "EO Not Assigned",
+    transfer_district_cd: record.transfer_district_cd || "",
+    transfer_office_cd: record.transfer_office_cd || "",
+    transfer_ps_cd: record.transfer_ps_cd || "",
+    transfer_district: lookupName("districts", record.transfer_district_cd),
+    transfer_office: lookupName("offices", record.transfer_office_cd),
+    transfer_police_station: lookupName("policeStations", record.transfer_ps_cd),
     respondent_categories: record.respondent_categories || "",
     purpose: record.complaint_purpose || "",
     priority: record.priority || derivePriority(statusDetail, record.compl_desc || "")
   };
+}
+
+function lookupName(group, id) {
+  var key = String(id || "").trim();
+  return key && state.lookups[group][key] ? state.lookups[group][key] : "";
+}
+
+function enrichComplaint(item) {
+  var transferDistrict = item.transfer_district || lookupName("districts", item.transfer_district_cd);
+  var transferOffice = item.transfer_office || lookupName("offices", item.transfer_office_cd);
+  var transferPoliceStation = item.transfer_police_station || lookupName("policeStations", item.transfer_ps_cd);
+
+  return Object.assign({}, item, {
+    transfer_district: transferDistrict,
+    transfer_office: transferOffice,
+    transfer_police_station: transferPoliceStation,
+    district: transferDistrict || item.district,
+    police_station: transferPoliceStation || item.police_station
+  });
 }
 
 function formatDate(value) {
@@ -158,6 +242,7 @@ function answerFromData(question) {
   records = filterByKnownValues(records, query, "priority", filters);
   records = filterByKnownValues(records, query, "police_station", filters);
   records = filterByKnownValues(records, query, "district", filters);
+  records = filterByKnownValues(records, query, "transfer_office", filters);
   records = filterByKnownValues(records, query, "category", filters);
   records = filterByKnownValues(records, query, "source", filters);
 
@@ -173,6 +258,10 @@ function answerFromData(question) {
         item.mobile,
         item.district,
         item.police_station,
+        item.transfer_office,
+        item.transfer_district_cd,
+        item.transfer_office_cd,
+        item.transfer_ps_cd,
         item.category,
         item.description,
         item.incident_place,
@@ -320,6 +409,7 @@ function renderResults() {
   renderChart({
     "Status": countBy(state.results, "status"),
     "Incident": countBy(state.results, "category"),
+    "District": countBy(state.results, "district"),
     "Source": countBy(state.results, "source")
   });
   renderTable();
@@ -362,6 +452,7 @@ function renderTable() {
       "<td>", escapeHtml(item.mobile), "</td>",
       "<td>", escapeHtml(item.police_station), "</td>",
       "<td>", escapeHtml(item.district), "</td>",
+      "<td>", escapeHtml(item.transfer_office), "</td>",
       "<td>", escapeHtml(item.category), "</td>",
       "<td><span class=\"badge ", statusClass(item.status), "\">", escapeHtml(item.status_detail), "</span></td>",
       "<td>", escapeHtml(item.source), "</td>",
@@ -406,7 +497,7 @@ function loadSampleData() {
       return response.text();
     })
     .then(function (text) {
-      state.complaints = parseCsv(text);
+      state.complaints = parseCsv(text).map(enrichComplaint);
       state.results = state.complaints;
       elements.dataStatus.textContent = "Sample data loaded";
       elements.answerText.textContent = "Sample complaint data loaded. Ask a question or upload the official CSV file.";
@@ -421,6 +512,14 @@ function loadSampleData() {
 }
 
 function loadComplaints() {
+  loadLookups()
+    .catch(function () {
+      return null;
+    })
+    .then(fetchComplaints);
+}
+
+function fetchComplaints() {
   fetch("/api/complaints")
     .then(function (response) {
       if (!response.ok) {
@@ -433,7 +532,7 @@ function loadComplaints() {
       if (!records || !records.length) {
         throw new Error("No API records");
       }
-      state.complaints = records.map(normalizeComplaint);
+      state.complaints = records.map(normalizeComplaint).map(enrichComplaint);
       state.results = state.complaints;
       elements.dataStatus.textContent = payload.source === "sample"
         ? "Sample API data loaded. Add Neon DATABASE_URL in Vercel for live database data."
@@ -442,6 +541,31 @@ function loadComplaints() {
       renderResults();
     })
     .catch(loadSampleData);
+}
+
+function loadLookups() {
+  return Promise.all([
+    loadLookupCsv(lookupPaths.districts, "districts"),
+    loadLookupCsv(lookupPaths.offices, "offices"),
+    loadLookupCsv(lookupPaths.policeStations, "policeStations")
+  ]);
+}
+
+function loadLookupCsv(path, group) {
+  return fetch(path)
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("Lookup unavailable");
+      }
+      return response.text();
+    })
+    .then(function (text) {
+      parseCsvRecords(text).forEach(function (record) {
+        if (record.id && record.name) {
+          state.lookups[group][String(record.id)] = record.name;
+        }
+      });
+    });
 }
 
 function setupSpeechInput() {
@@ -525,6 +649,7 @@ function formatRecordSpeech(item) {
     "Mobile", item.mobile + ".",
     "Police station", item.police_station + ".",
     "District", item.district + ".",
+    "Office", item.transfer_office + ".",
     "Incident type", item.category + ".",
     "Status", item.status_detail + ".",
     "Source", item.source + ".",
@@ -544,7 +669,7 @@ elements.csvInput.addEventListener("change", function (event) {
 
   var reader = new FileReader();
   reader.onload = function () {
-    state.complaints = parseCsv(reader.result);
+    state.complaints = parseCsv(reader.result).map(enrichComplaint);
     state.results = state.complaints;
     elements.dataStatus.textContent = file.name + " loaded";
     elements.answerText.textContent = "CSV loaded. Ask a question about the uploaded complaint data.";

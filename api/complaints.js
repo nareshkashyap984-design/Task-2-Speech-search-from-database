@@ -62,7 +62,7 @@ module.exports = function handler(req, res) {
     SELECT
       compl_reg_num,
       to_char(compl_reg_dt, 'YYYY-MM-DD') AS compl_reg_dt,
-      district_name,
+      complaints.district_name,
       compl_desc,
       compl_srno,
       first_name,
@@ -90,8 +90,20 @@ module.exports = function handler(req, res) {
       complainant_type,
       complaint_purpose,
       io_details,
-      respondent_categories
+      respondent_categories,
+      transfer_district_cd,
+      transfer_office_cd,
+      transfer_ps_cd,
+      transfer_district_lookup.name AS transfer_district,
+      transfer_office_lookup.name AS transfer_office,
+      transfer_ps_lookup.name AS transfer_police_station
     FROM complaints
+    LEFT JOIN districts transfer_district_lookup
+      ON transfer_district_lookup.id = complaints.transfer_district_cd
+    LEFT JOIN offices transfer_office_lookup
+      ON transfer_office_lookup.id = complaints.transfer_office_cd
+    LEFT JOIN police_stations transfer_ps_lookup
+      ON transfer_ps_lookup.id = complaints.transfer_ps_cd
     ORDER BY compl_reg_dt DESC, compl_srno ASC
   `
     .then(function (rows) {

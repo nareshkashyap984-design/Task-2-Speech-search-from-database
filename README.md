@@ -98,15 +98,21 @@ https://console.neon.tech
 database/schema.sql
 ```
 
-4. Then run:
+4. Then run the lookup seed file. This inserts district, office, and police-station master tables used for ID-based searching:
+
+```text
+database/lookup-seed.sql
+```
+
+5. Then run:
 
 ```text
 database/seed.sql
 ```
 
-5. Copy the Neon database connection string.
+6. Copy the Neon database connection string.
 
-6. In Vercel, add an environment variable:
+7. In Vercel, add an environment variable:
 
 ```text
 DATABASE_URL=postgresql://USER:PASSWORD@HOST.neon.tech/DATABASE?sslmode=require
@@ -161,4 +167,12 @@ The portal now supports the April 2026 PHQ complaint CSV structure, including:
 - `statusRaw`, `statusGroup`, `statusOfComplaint`
 - `complaintSource`, `respondentCategories`
 
-Speech search can now match complaint number, complainant, mobile, district, police station, incident text, source, and status. Result speaking remains manual through `Speak Answer`, row click, or the row `Speak` button, and `Stop Speak` cancels narration.
+Speech search can now match complaint number, complainant, mobile, district, police station, office, incident text, source, and status. Result speaking remains manual through `Speak Answer`, row click, or the row `Speak` button, and `Stop Speak` cancels narration.
+
+Additional lookup CSVs are included for ID-based display and searching:
+
+- `data/districts.csv`
+- `data/offices.csv`
+- `data/police-stations.csv`
+
+The speech search maps `transferDistrictCd`, `transferOfficeCd`, and `transferPsCd` to readable names so questions can match district, office, or police-station names instead of only numeric IDs.

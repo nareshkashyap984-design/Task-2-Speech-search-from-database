@@ -49,3 +49,24 @@ CREATE INDEX IF NOT EXISTS idx_complaints_status_group ON complaints (status_gro
 CREATE INDEX IF NOT EXISTS idx_complaints_address_ps ON complaints (address_ps);
 CREATE INDEX IF NOT EXISTS idx_complaints_address_district ON complaints (address_district);
 CREATE INDEX IF NOT EXISTS idx_complaints_source ON complaints (complaint_source);
+
+CREATE TABLE IF NOT EXISTS districts (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS offices (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS police_stations (
+  id TEXT PRIMARY KEY,
+  district_id TEXT,
+  district_name TEXT,
+  name TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_police_stations_district_id ON police_stations (district_id);
+CREATE INDEX IF NOT EXISTS idx_offices_name ON offices (name);
+CREATE INDEX IF NOT EXISTS idx_districts_name ON districts (name);
