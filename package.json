@@ -1,0 +1,15 @@
+{
+  "name": "task-2-speech-search-from-database",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  },
+  "devDependencies": {
+    "vercel": "^34.3.0"
+  }
+}

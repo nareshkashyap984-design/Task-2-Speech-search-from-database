@@ -1,0 +1,9 @@
+complaint_id,date,complainant,police_station,category,status,assigned_officer,priority
+CMP-001,2026-02-01,Ramesh Kumar,PS Quilla,Fraud,Pending,ASI Sandeep,High
+CMP-002,2026-02-03,Sunita Devi,PS Samalkha,Domestic Dispute,In Progress,SI Pooja,Normal
+CMP-003,2026-02-05,Amit Malik,PS Tehsil Camp,Theft,Resolved,HC Ravinder,Normal
+CMP-004,2026-02-07,Naveen Sharma,PS Sector 13/17,Cyber Complaint,Pending,SI Manish,High
+CMP-005,2026-02-09,Kavita Rani,PS Quilla,Property Dispute,In Progress,ASI Sandeep,Normal
+CMP-006,2026-02-11,Imran Khan,PS Samalkha,Missing Article,Resolved,HC Ravinder,Low
+CMP-007,2026-02-13,Meena,PS Tehsil Camp,Public Nuisance,Pending,SI Pooja,Normal
+CMP-008,2026-02-15,Deepak,PS Sector 13/17,Fraud,Resolved,SI Manish,High

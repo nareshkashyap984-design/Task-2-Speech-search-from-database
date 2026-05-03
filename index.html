@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task 2 - Speech Search from Database</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Police Data Search</p>
+        <h1>Speech Search Assistant</h1>
+      </div>
+      <label class="upload-button">
+        <span>Upload CSV</span>
+        <input id="csvInput" type="file" accept=".csv,text/csv">
+      </label>
+    </section>
+
+    <section class="assistant-panel">
+      <div class="question-row">
+        <input id="questionInput" type="text" placeholder="Ask: pending complaints in PS Quilla, high priority cases, resolved fraud complaints">
+        <button id="micButton" type="button" title="Speak question">Mic</button>
+        <button id="askButton" type="button">Ask</button>
+      </div>
+      <div class="quick-questions" aria-label="Example questions">
+        <button type="button" data-question="How many pending complaints are there?">Pending count</button>
+        <button type="button" data-question="Show high priority complaints">High priority</button>
+        <button type="button" data-question="Complaints from PS Quilla">PS Quilla</button>
+        <button type="button" data-question="Show resolved fraud complaints">Resolved fraud</button>
+      </div>
+    </section>
+
+    <section class="answer-grid">
+      <article class="answer-box">
+        <div class="panel-heading">
+          <h2>Answer</h2>
+          <span id="dataStatus">Loading data...</span>
+        </div>
+        <p id="answerText">Ask a question about the complaint data.</p>
+      </article>
+
+      <article class="answer-box">
+        <div class="panel-heading">
+          <h2>Result Chart</h2>
+          <span id="matchCount">0 matches</span>
+        </div>
+        <div id="resultChart" class="bar-chart"></div>
+      </article>
+    </section>
+
+    <section class="answer-box">
+      <div class="panel-heading">
+        <h2>Matching Records</h2>
+        <span id="recordCount">0 records</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Complaint ID</th>
+              <th>Date</th>
+              <th>Complainant</th>
+              <th>Police Station</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Officer</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
