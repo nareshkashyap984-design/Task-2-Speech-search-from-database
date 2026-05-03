@@ -16,10 +16,10 @@ Local code folder:
 E:\naresh project\New folder\Task-2-Speech-search-from-database
 ```
 
-Paste GitHub repository link here:
+GitHub repository link:
 
 ```text
-https://github.com/YOUR-USERNAME/Task-2-Speech-search-from-database
+https://github.com/nareshkashyap984-design/Task-2-Speech-search-from-database
 ```
 
 ## Description
