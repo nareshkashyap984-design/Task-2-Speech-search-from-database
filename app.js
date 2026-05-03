@@ -17,7 +17,8 @@ var elements = {
   matchCount: document.getElementById("matchCount"),
   dataStatus: document.getElementById("dataStatus"),
   speechStatus: document.getElementById("speechStatus"),
-  speakAnswerButton: document.getElementById("speakAnswerButton")
+  speakAnswerButton: document.getElementById("speakAnswerButton"),
+  stopSpeakButton: document.getElementById("stopSpeakButton")
 };
 
 function parseCsv(text) {
@@ -97,7 +98,6 @@ function askQuestion() {
   state.results = answer.records;
   elements.answerText.textContent = answer.text;
   renderResults();
-  speakText(answer.text);
 }
 
 function answerFromData(question) {
@@ -418,7 +418,20 @@ function speakText(text) {
   var utterance = new SpeechSynthesisUtterance(String(text || ""));
   utterance.lang = "en-IN";
   utterance.rate = 0.95;
+  utterance.onstart = function () {
+    elements.speechStatus.textContent = "Speaking...";
+  };
+  utterance.onend = function () {
+    elements.speechStatus.textContent = "Speech completed.";
+  };
   window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    elements.speechStatus.textContent = "Speech stopped.";
+  }
 }
 
 function formatRecordSpeech(item) {
@@ -459,6 +472,7 @@ elements.askButton.addEventListener("click", askQuestion);
 elements.speakAnswerButton.addEventListener("click", function () {
   speakText(elements.answerText.textContent);
 });
+elements.stopSpeakButton.addEventListener("click", stopSpeaking);
 elements.questionInput.addEventListener("keydown", function (event) {
   if (event.key === "Enter") {
     askQuestion();

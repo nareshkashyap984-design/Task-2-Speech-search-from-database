@@ -169,6 +169,12 @@ button:hover,
   line-height: 1.5;
 }
 
+.answer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .secondary-action,
 .speak-row {
   min-height: 32px;
@@ -181,6 +187,15 @@ button:hover,
 .secondary-action:hover,
 .speak-row:hover {
   background: #bfdbfe;
+}
+
+.stop-action {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.stop-action:hover {
+  background: #fecaca;
 }
 
 .bar-chart {

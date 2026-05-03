@@ -28,7 +28,8 @@ This portal provides text and speech-based search over complaint database record
 
 - Ask natural-language questions about complaint records
 - Use microphone input where browser speech recognition is supported
-- Hear the answer automatically after asking a question
+- Click `Speak Answer` to hear the answer after asking a question
+- Click `Stop Speak` to stop current text-to-speech output
 - Click any matching result row or its `Speak` button to hear that record
 - Upload official CSV data for testing
 - View a direct answer based on matching records
