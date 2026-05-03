@@ -2,10 +2,10 @@
 
 ## Live Deployed Portal Link
 
-Paste Vercel live link here:
+Vercel live link:
 
 ```text
-https://your-task-2-speech-search.vercel.app
+https://task-2-speech-search-from-database.vercel.app
 ```
 
 ## Code Folder/Repository Link
