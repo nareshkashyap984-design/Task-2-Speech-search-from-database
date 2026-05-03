@@ -15,7 +15,9 @@ var elements = {
   resultsBody: document.getElementById("resultsBody"),
   recordCount: document.getElementById("recordCount"),
   matchCount: document.getElementById("matchCount"),
-  dataStatus: document.getElementById("dataStatus")
+  dataStatus: document.getElementById("dataStatus"),
+  speechStatus: document.getElementById("speechStatus"),
+  speakAnswerButton: document.getElementById("speakAnswerButton")
 };
 
 function parseCsv(text) {
@@ -87,6 +89,7 @@ function askQuestion() {
   var question = elements.questionInput.value.trim();
   if (!question) {
     elements.answerText.textContent = "Type or speak a question first.";
+    speakText("Type or speak a question first.");
     return;
   }
 
@@ -94,10 +97,11 @@ function askQuestion() {
   state.results = answer.records;
   elements.answerText.textContent = answer.text;
   renderResults();
+  speakText(answer.text);
 }
 
 function answerFromData(question) {
-  var query = question.toLowerCase();
+  var query = normalizeQuery(question);
   var records = state.complaints.slice();
   var filters = [];
 
@@ -106,35 +110,33 @@ function answerFromData(question) {
   records = filterByKnownValues(records, query, "police_station", filters);
   records = filterByKnownValues(records, query, "category", filters);
 
-  if (query.indexOf("pending") !== -1) {
+  if (hasAny(query, ["pending", "pend", "बाकी", "लंबित"])) {
     records = filterExact(records, "status", "Pending");
     filters.push("status: Pending");
   }
-  if (query.indexOf("progress") !== -1 || query.indexOf("in progress") !== -1) {
+  if (hasAny(query, ["progress", "in progress", "under process", "चल रही", "प्रगति"])) {
     records = filterExact(records, "status", "In Progress");
     filters.push("status: In Progress");
   }
-  if (query.indexOf("resolved") !== -1 || query.indexOf("closed") !== -1) {
+  if (hasAny(query, ["resolved", "closed", "complete", "solved", "निपट", "बंद"])) {
     records = filterExact(records, "status", "Resolved");
     filters.push("status: Resolved");
   }
-  if (query.indexOf("high") !== -1) {
+  if (hasAny(query, ["high", "urgent", "priority", "जरूरी"])) {
     records = filterExact(records, "priority", "High");
     filters.push("priority: High");
   }
 
-  var wantsCount = query.indexOf("how many") !== -1 ||
-    query.indexOf("count") !== -1 ||
-    query.indexOf("total") !== -1 ||
-    query.indexOf("number") !== -1;
+  var wantsCount = hasAny(query, ["how many", "count", "total", "number", "kitni", "kitne", "कितनी", "कितने"]);
 
   var topStation = topValue(records, "police_station");
   var topCategory = topValue(records, "category");
   var filterText = filters.length ? " Filters applied: " + uniqueValues(filters).join(", ") + "." : "";
+  var statusText = summarizeByKey(records, "status", "Status");
 
   if (wantsCount) {
     return {
-      text: "Found " + records.length + " matching complaint record(s)." + filterText,
+      text: "Found " + records.length + " matching complaint record(s). " + statusText + filterText,
       records: records
     };
   }
@@ -147,9 +149,25 @@ function answerFromData(question) {
   }
 
   return {
-    text: "Found " + records.length + " matching record(s). Top police station: " + topStation.label + " (" + topStation.count + "). Top category: " + topCategory.label + " (" + topCategory.count + ")." + filterText,
+    text: "Found " + records.length + " matching record(s). Top police station: " + topStation.label + " (" + topStation.count + "). Top category: " + topCategory.label + " (" + topCategory.count + "). " + statusText + filterText,
     records: records
   };
+}
+
+function normalizeQuery(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/police station/g, "ps")
+    .replace(/sector thirteen seventeen/g, "sector 13/17")
+    .replace(/sector 13 17/g, "sector 13/17")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function hasAny(query, terms) {
+  return terms.some(function (term) {
+    return query.indexOf(term) !== -1;
+  });
 }
 
 function filterByKnownValues(records, query, key, filters) {
@@ -158,7 +176,7 @@ function filterByKnownValues(records, query, key, filters) {
   }));
 
   values.forEach(function (value) {
-    if (value && query.indexOf(value.toLowerCase()) !== -1) {
+    if (value && recordMatchesLooseValue(null, key, query, value)) {
       records = filterExact(records, key, value);
       filters.push(key.replace("_", " ") + ": " + value);
     }
@@ -171,6 +189,14 @@ function filterExact(records, key, value) {
   return records.filter(function (item) {
     return item[key].toLowerCase() === value.toLowerCase();
   });
+}
+
+function recordMatchesLooseValue(record, key, query, value) {
+  var normalizedValue = normalizeQuery(value);
+  return normalizedValue && (
+    query.indexOf(normalizedValue) !== -1 ||
+    query.indexOf(normalizedValue.replace("ps ", "")) !== -1
+  );
 }
 
 function topValue(records, key) {
@@ -192,6 +218,14 @@ function countBy(records, key) {
   }, {});
 }
 
+function summarizeByKey(records, key, label) {
+  var totals = countBy(records, key);
+  var parts = Object.keys(totals).sort().map(function (name) {
+    return name + ": " + totals[name];
+  });
+  return parts.length ? label + " breakdown: " + parts.join(", ") + "." : "";
+}
+
 function uniqueValues(values) {
   return values.filter(Boolean).filter(function (value, index, list) {
     return list.indexOf(value) === index;
@@ -203,15 +237,19 @@ function uniqueValues(values) {
 function renderResults() {
   elements.recordCount.textContent = state.results.length + " records";
   elements.matchCount.textContent = state.results.length + " matches";
-  renderChart(countBy(state.results, "status"));
+  renderChart({
+    "Status": countBy(state.results, "status"),
+    "Category": countBy(state.results, "category")
+  });
   renderTable();
 }
 
-function renderChart(totals) {
-  var entries = Object.keys(totals).map(function (label) {
-    return [label, totals[label]];
-  }).sort(function (a, b) {
-    return b[1] - a[1];
+function renderChart(groups) {
+  var entries = [];
+  Object.keys(groups).forEach(function (group) {
+    Object.keys(groups[group]).forEach(function (label) {
+      entries.push([group + ": " + label, groups[group][label]]);
+    });
   });
   var max = Math.max.apply(null, entries.map(function (entry) {
     return entry[1];
@@ -232,8 +270,10 @@ function renderChart(totals) {
 
 function renderTable() {
   elements.resultsBody.innerHTML = "";
-  state.results.forEach(function (item) {
+  state.results.forEach(function (item, index) {
     var row = document.createElement("tr");
+    row.tabIndex = 0;
+    row.setAttribute("data-index", index);
     row.innerHTML = [
       "<td>", escapeHtml(item.complaint_id), "</td>",
       "<td>", escapeHtml(item.date), "</td>",
@@ -242,8 +282,18 @@ function renderTable() {
       "<td>", escapeHtml(item.category), "</td>",
       "<td><span class=\"badge ", statusClass(item.status), "\">", escapeHtml(item.status), "</span></td>",
       "<td>", escapeHtml(item.assigned_officer), "</td>",
-      "<td><span class=\"badge ", priorityClass(item.priority), "\">", escapeHtml(item.priority), "</span></td>"
+      "<td><span class=\"badge ", priorityClass(item.priority), "\">", escapeHtml(item.priority), "</span></td>",
+      "<td><button class=\"speak-row\" type=\"button\">Speak</button></td>"
     ].join("");
+    row.addEventListener("click", function () {
+      speakRecord(item);
+    });
+    row.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        speakRecord(item);
+      }
+    });
     elements.resultsBody.appendChild(row);
   });
 }
@@ -298,6 +348,9 @@ function loadComplaints() {
     })
     .then(function (payload) {
       var records = Array.isArray(payload) ? payload : payload.records;
+      if (!records || !records.length) {
+        throw new Error("No API records");
+      }
       state.complaints = records.map(normalizeComplaint);
       state.results = state.complaints;
       elements.dataStatus.textContent = payload.source === "sample"
@@ -314,26 +367,75 @@ function setupSpeechInput() {
   if (!SpeechRecognition) {
     elements.micButton.disabled = true;
     elements.micButton.title = "Speech input is not supported in this browser";
+    elements.speechStatus.textContent = "Speech input is not supported in this browser. Use text search.";
     return;
   }
 
   var recognition = new SpeechRecognition();
   recognition.lang = "en-IN";
   recognition.interimResults = false;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
 
   elements.micButton.addEventListener("click", function () {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    elements.speechStatus.textContent = "Listening... speak your question now.";
+    elements.micButton.textContent = "Stop";
     elements.micButton.classList.add("listening");
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (error) {
+      elements.speechStatus.textContent = "Microphone is already listening.";
+    }
   });
 
   recognition.onresult = function (event) {
-    elements.questionInput.value = event.results[0][0].transcript;
+    var transcript = event.results[0][0].transcript;
+    elements.questionInput.value = transcript;
+    elements.speechStatus.textContent = "Heard: " + transcript;
     askQuestion();
+  };
+
+  recognition.onerror = function (event) {
+    elements.speechStatus.textContent = "Speech error: " + event.error + ". You can type the question manually.";
   };
 
   recognition.onend = function () {
     elements.micButton.classList.remove("listening");
+    elements.micButton.textContent = "Mic";
   };
+}
+
+function speakText(text) {
+  if (!("speechSynthesis" in window)) {
+    elements.speechStatus.textContent = "Text-to-speech is not supported in this browser.";
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  var utterance = new SpeechSynthesisUtterance(String(text || ""));
+  utterance.lang = "en-IN";
+  utterance.rate = 0.95;
+  window.speechSynthesis.speak(utterance);
+}
+
+function formatRecordSpeech(item) {
+  return [
+    "Complaint", item.complaint_id + ".",
+    "Date", item.date + ".",
+    "Complainant", item.complainant + ".",
+    "Police station", item.police_station + ".",
+    "Category", item.category + ".",
+    "Status", item.status + ".",
+    "Assigned officer", item.assigned_officer + ".",
+    "Priority", item.priority + "."
+  ].join(" ");
+}
+
+function speakRecord(item) {
+  speakText(formatRecordSpeech(item));
 }
 
 elements.csvInput.addEventListener("change", function (event) {
@@ -354,6 +456,9 @@ elements.csvInput.addEventListener("change", function (event) {
 });
 
 elements.askButton.addEventListener("click", askQuestion);
+elements.speakAnswerButton.addEventListener("click", function () {
+  speakText(elements.answerText.textContent);
+});
 elements.questionInput.addEventListener("keydown", function (event) {
   if (event.key === "Enter") {
     askQuestion();

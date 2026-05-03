@@ -25,6 +25,7 @@
         <button id="micButton" type="button" title="Speak question">Mic</button>
         <button id="askButton" type="button">Ask</button>
       </div>
+      <p id="speechStatus" class="speech-status">Use text search or click Mic and speak your question.</p>
       <div class="quick-questions" aria-label="Example questions">
         <button type="button" data-question="How many pending complaints are there?">Pending count</button>
         <button type="button" data-question="Show high priority complaints">High priority</button>
@@ -40,6 +41,7 @@
           <span id="dataStatus">Loading data...</span>
         </div>
         <p id="answerText">Ask a question about the complaint data.</p>
+        <button id="speakAnswerButton" class="secondary-action" type="button">Speak Answer</button>
       </article>
 
       <article class="answer-box">
@@ -68,6 +70,7 @@
               <th>Status</th>
               <th>Officer</th>
               <th>Priority</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>

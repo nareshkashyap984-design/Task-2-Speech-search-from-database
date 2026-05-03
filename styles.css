@@ -130,6 +130,12 @@ button:hover,
   margin-top: 12px;
 }
 
+.speech-status {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .quick-questions button {
   min-height: 34px;
   padding: 0 12px;
@@ -158,9 +164,23 @@ button:hover,
 }
 
 #answerText {
-  margin-bottom: 0;
+  margin-bottom: 12px;
   color: var(--ink);
   line-height: 1.5;
+}
+
+.secondary-action,
+.speak-row {
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 13px;
+}
+
+.secondary-action:hover,
+.speak-row:hover {
+  background: #bfdbfe;
 }
 
 .bar-chart {
@@ -206,6 +226,14 @@ td {
   text-align: left;
   font-size: 13px;
   vertical-align: top;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
 }
 
 th {

@@ -28,10 +28,12 @@ This portal provides text and speech-based search over complaint database record
 
 - Ask natural-language questions about complaint records
 - Use microphone input where browser speech recognition is supported
+- Hear the answer automatically after asking a question
+- Click any matching result row or its `Speak` button to hear that record
 - Upload official CSV data for testing
 - View a direct answer based on matching records
 - See matching complaint records in a table
-- View a status chart for the result set
+- View status and category chart output for the result set
 
 The portal is ready for Neon PostgreSQL through a Vercel API endpoint:
 
